@@ -7,6 +7,10 @@ import NovaVenda from './src/pages/vendas/NovaVenda';
 import CadastroCliente from './src/pages/cadastros/CadastroCliente';
 import NovoOrcamento from './src/pages/orcamentos/NovoOrcamento';
 import Menu from './src/pages/menu/Menu';
+import ContagemProduto from './src/pages/produto/ContagemProduto';
+import BuscaCliente from './src/pages/Clientes/BuscaCliente';
+import PedidoAberto from './src/pages/vendas/PedidoAberto';
+import LocalizarProduto from './src/pages/produto/LocalizarProduto';
 export default function App() {
   const Stack = createNativeStackNavigator();
   return (
@@ -17,9 +21,13 @@ export default function App() {
        <Stack.Screen name="Orcamentos" component={NovoOrcamento} />
        <Stack.Screen name="Login" component={Login} />
        <Stack.Screen name="Novo Pedido de Venda" component={NovaVenda} />
+       <Stack.Screen name="Contagem de Produto" component={ContagemProduto} />
+       <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
+       <Stack.Screen name="Pedidos Abertos" component={PedidoAberto} />
+       <Stack.Screen name="Localizar Produto" component={LocalizarProduto} />
      </Stack.Navigator>
    </NavigationContainer>
-    
+     
   );
 }
 
