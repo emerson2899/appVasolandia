@@ -12,7 +12,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -21,14 +22,18 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import axios from 'axios';
 import { debounce } from 'lodash';
+import { Button } from '@react-navigation/elements';
 
 export default function NovaVenda() {
+  let API_URL = 'http://192.168.1.15:3000/api/';
   // Estados para Cliente
   const [buscaCliente, setBuscaCliente] = useState('');
   const [sugestoesClientes, setSugestoesClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [modalClienteVisible, setModalClienteVisible] = useState(false);
   const [loadingClientes, setLoadingClientes] = useState(false);
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteCodigo, setClienteCodigo] = useState('');
 
   // Estados para Produto
   const [codigoProduto, setCodigoProduto] = useState('');
@@ -36,6 +41,7 @@ export default function NovaVenda() {
   const [sugestoesProdutos, setSugestoesProdutos] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [loadingProdutos, setLoadingProdutos] = useState(false);
+  const [nomeProduto, setNomeProduto] = useState('');
 
   // Estados da Venda
   const [quantidade, setQuantidade] = useState('1');
@@ -55,7 +61,7 @@ export default function NovaVenda() {
   const buscaClienteRef = useRef();
   const buscaProdutoRef = useRef();
 
-  // Debounced search functions
+  // Debounced search functions/*
   const buscarClientesDebounced = useCallback(
     debounce(async (termo) => {
       if (!termo || termo.length < 2) {
@@ -65,10 +71,8 @@ export default function NovaVenda() {
 
       setLoadingClientes(true);
       try {
-        const response = await axios.get(
-          `http://192.168.1.23:3000/api/clientes/busca?q=${encodeURIComponent(termo)}&limit=10`
-        );
-        setSugestoesClientes(response.data || []);
+        const response = await axios.get(`http://192.168.1.15:3000/api/clientes/seguro/buscar/nome?nome=${encodeURIComponent(clienteNome)}`)
+        setSugestoesClientes(response.data.data || []);
       } catch (error) {
         console.error('Erro ao buscar clientes:', error);
         setSugestoesClientes([]);
@@ -88,10 +92,9 @@ export default function NovaVenda() {
 
       setLoadingProdutos(true);
       try {
-        const response = await axios.get(
-          `http://192.168.1.13:3000/api/produto/seguro/buscar/nome/nome?q=${encodeURIComponent(termo)}&limit=10`
-        );
-        setSugestoesProdutos(response.data || []);
+        const response = await axios.get(`http://192.168.1.15:3000/api/produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}` );
+      /*  const response = await fetch(`http://192.168.1.15:3000/api/produto/seguro/buscar/nome?=${encodeURIComponent(buscaProduto)}`);*/
+        setSugestoesProdutos(response.data.data || []);
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);
         setSugestoesProdutos([]);
@@ -102,14 +105,53 @@ export default function NovaVenda() {
     []
   );
 
-  // Efeitos para busca
+function buscarProdutoCodigo(){
+  axios.get(`http://192.168.1.15:3000/api/produto/${codigoProduto}`)
+  .then(response => {
+    setProdutoSelecionado(response.data.data);
+  })
+  .catch(error => {
+    console.error('Erro ao buscar produto:', error);
+  })
+}
+
+  // Efeitos para busca/*
+  /*
   useEffect(() => {
     buscarClientesDebounced(buscaCliente);
   }, [buscaCliente, buscarClientesDebounced]);
 
   useEffect(() => {
-    buscarProdutosDebounced(buscaProduto);
-  }, [buscaProduto, buscarProdutosDebounced]);
+    buscarProdutosDebounced(nomeProduto);
+  }, [nomeProduto, buscarProdutosDebounced]);*/
+
+  function buscarProdutoCodigo() {
+    axios.get(`http://192.168.1.15:3000/api/produto/${codigoProduto}`)
+      .then(response => {
+        setProdutoSelecionado(response.data.data);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar produto:', error);
+      });
+  }
+  function buscarProdutoNome() {
+    axios.get(`${API_URL}produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}`)
+      .then(response => {
+        setSugestoesProdutos(response.data.data);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar produto:', error);
+      });
+  }
+  function buscarClientesNome() {
+    axios.get(`http://192.168.1.15:3000/api/clientes/seguro/buscar/nome?nome=${clienteNome}`)
+      .then(response => {
+        setSugestoesClientes(response.data.data);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar clientes:', error);
+      });
+  }
 
   // Timer da câmera
   useEffect(() => {
@@ -127,7 +169,7 @@ export default function NovaVenda() {
     setClienteSelecionado(cliente);
     setBuscaCliente('');
     setSugestoesClientes([]);
-    Alert.alert('Cliente Selecionado', `${cliente.nome}\n${cliente.cpf || ''}`);
+    Alert.alert('Cliente Selecionado', `${cliente.NOME}\n${cliente.cpf || ''}`);
   };
 
   // Selecionar produto
@@ -145,20 +187,49 @@ export default function NovaVenda() {
 
     try {
       if (tipo === 'cliente') {
-        const response = await axios.get(`http://192.168.1.13:3000/api/clientes/seguro/busca/?CODIGO=${codigo}`);
-        if (response.data) {
-          selecionarCliente(response.data);
+      /*  const response = await axios.get(`http://192.168.1.15:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${clienteCodigo}`);*/
+      const response = await fetch(`http://192.168.1.15:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${codigo}`);
+        if (response.data.data) {
+          selecionarCliente(response.data.data);
         }
       } else {
-        const response = await axios.get(`http://192.168.1.13:3000/api/produto/${codigo}`);
-        if (response.data) {
-          selecionarProduto(response.data);
+        const response = await axios.get(`http://192.168.1.15:3000/api/produto/${codigo}`);
+        if (response.data.data) {
+          selecionarProduto(response.data.data);
         }
       }
     } catch (error) {
       Alert.alert('Erro', `${tipo === 'cliente' ? 'Cliente' : 'Produto'} não encontrado`);
     }
   };
+
+ /* const LocalizarClientePorNome =() =>{
+    try {
+     const response = axios.get(`${API_URL}/nome?nome=${encodeURIComponent(clienteNome)}`);
+ 
+     if (response.data && response.data.data) {
+       setCliente(response.data.data);
+       setClienteNome(response.data.data.NOME);
+       
+     }
+    } catch (error) {
+     console.log(error);
+    }
+ } */
+
+ const LocalizarProdutoNome =() =>{
+  try {
+   const response = axios.get(`${API_URL}/nome?nome=${encodeURIComponent(nomeProduto)}`);
+ 
+   if (response.data && response.data.data) {
+     setProduto(response.data.data);
+    //setNomeProduto(response.data.data.NOME);
+     
+   }
+  } catch (error) {
+   console.log(error);
+  }
+ }
 
   // Scanner de código de barras
   const askForCameraPermission = async () => {
@@ -227,7 +298,7 @@ export default function NovaVenda() {
         return {
           ...item,
           quantidade,
-          subtotal: item.produto.preco * quantidade * (1 - item.desconto / 100)
+          subtotal: item.produto.PRECOSAI * quantidade * (1 - item.desconto / 100)
         };
       }
       return item;
@@ -249,13 +320,13 @@ export default function NovaVenda() {
         <Ionicons name="person" size={20} color="#2D5A3D" />
       </View>
       <View style={styles.sugestaoInfo}>
-        <Text style={styles.sugestaoNome}>{item.nome}</Text>
+        <Text style={styles.sugestaoNome}>{item.NOME}</Text>
         <Text style={styles.sugestaoDetalhes}>
           {item.cpf ? `CPF: ${formatarCPF(item.cpf)}` : ''}
           {item.cpf && item.telefone ? ' • ' : ''}
           {item.telefone ? `Tel: ${item.telefone}` : ''}
         </Text>
-        <Text style={styles.sugestaoCodigo}>Cód: {item.codigo}</Text>
+        <Text style={styles.sugestaoCodigo}>Cód: {item.CODIGO}</Text>
       </View>
       <Feather name="chevron-right" size={20} color="#999" />
     </TouchableOpacity>
@@ -312,12 +383,12 @@ export default function NovaVenda() {
           {clienteSelecionado ? (
             <View style={styles.selecionadoCard}>
               <View style={styles.selecionadoInfo}>
-                <Text style={styles.selecionadoNome}>{clienteSelecionado.nome}</Text>
+                <Text style={styles.selecionadoNome}>{clienteSelecionado.NOME}</Text>
                 <View style={styles.selecionadoDetalhes}>
                   {clienteSelecionado.cpf && (
                     <Text style={styles.selecionadoCPF}>{formatarCPF(clienteSelecionado.cpf)}</Text>
                   )}
-                  <Text style={styles.selecionadoCodigo}>Cód: {clienteSelecionado.codigo}</Text>
+                  <Text style={styles.selecionadoCodigo}>Cód: {clienteSelecionado.CODIGO}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -335,10 +406,17 @@ export default function NovaVenda() {
                   <TextInput
                     ref={buscaClienteRef}
                     style={styles.inputWithIcon}
-                    placeholder="Digite nome, CPF ou código do cliente"
-                    value={buscaCliente}
-                    onChangeText={setBuscaCliente}
+                    placeholder="Digite nome do cliente"
+                    value={clienteNome}
+                    onChangeText={setClienteNome}
                     autoCapitalize="words"
+                  />
+                  <Button
+                    title="Buscar"
+                    backgroundColor="#2D5A3D"
+                    onPress={buscarClientesNome}
+                    color="#030e07ff"
+                    style={styles.buscarButton}
                   />
                   {loadingClientes && (
                     <ActivityIndicator size="small" color="#2D5A3D" style={styles.inputLoading} />
@@ -347,7 +425,10 @@ export default function NovaVenda() {
                 
                 {/* Sugestões de Clientes */}
                 {sugestoesClientes.length > 0 && (
-                  <View style={styles.sugestoesContainer}>
+                  <SafeAreaView>
+                    <ScrollView>
+                       <View style={styles.sugestoesContainer}>
+                  
                     <FlatList
                       data={sugestoesClientes}
                       keyExtractor={(item) => item.id?.toString() || item.codigo}
@@ -355,7 +436,14 @@ export default function NovaVenda() {
                       scrollEnabled={false}
                       nestedScrollEnabled={true}
                     />
+                    
+                   
                   </View>
+
+                    </ScrollView>
+                  </SafeAreaView>
+
+                 
                 )}
                 
                 {buscaCliente && sugestoesClientes.length === 0 && !loadingClientes && (
@@ -374,13 +462,13 @@ export default function NovaVenda() {
                     style={[styles.input, styles.codigoInput]}
                     placeholder="Código do cliente"
                     keyboardType="numeric"
-                    value={codigoProduto}
-                    onChangeText={setCodigoProduto}
-                    onSubmitEditing={() => buscarPorCodigo(codigoProduto, 'cliente')}
+                    value={clienteCodigo}
+                    onChangeText={setClienteCodigo }
+                    onSubmitEditing={() => buscarPorCodigo(clienteCodigo, 'cliente')}
                   />
                   <TouchableOpacity
                     style={styles.btnBuscarCodigo}
-                    onPress={() => buscarPorCodigo(codigoProduto, 'cliente')}
+                    onPress={() => buscarPorCodigo(clienteCodigo, 'cliente')}
                   >
                     <Text style={styles.btnBuscarCodigoText}>Buscar</Text>
                   </TouchableOpacity>
@@ -425,9 +513,16 @@ export default function NovaVenda() {
                       ref={buscaProdutoRef}
                       style={[styles.inputWithIcon, styles.inputFlex]}
                       placeholder="Digite nome ou código do produto"
-                      value={buscaProduto}
-                      onChangeText={setBuscaProduto}
+                      value={nomeProduto}
+                      onChangeText={setNomeProduto}
                       autoCapitalize="none"
+                    />
+                    <Button
+                      title="Buscar"
+                      backgroundColor="#2D5A3D"
+                      onPress={buscarProdutoNome}
+                      color="#030e07ff"
+                      style={styles.buscarButton}
                     />
                     {loadingProdutos && (
                       <ActivityIndicator size="small" color="#2D5A3D" style={styles.inputLoading} />
@@ -449,16 +544,16 @@ export default function NovaVenda() {
                       data={sugestoesProdutos}
                       keyExtractor={(item) => item.id?.toString() || item.codigo}
                       renderItem={renderProdutoItem}
-                      scrollEnabled={false}
+                      scrollEnabled={true}
                       nestedScrollEnabled={true}
                     />
                   </View>
                 )}
                 
-                {buscaProduto && sugestoesProdutos.length === 0 && !loadingProdutos && (
+                {nomeProduto && sugestoesProdutos.length === 0 && !loadingProdutos && (
                   <View style={styles.semResultados}>
                     <Text style={styles.semResultadosText}>
-                      Nenhum produto encontrado para "{buscaProduto}"
+                      Nenhum produto encontrado para "{nomeProduto}"
                     </Text>
                   </View>
                 )}
@@ -574,9 +669,9 @@ export default function NovaVenda() {
                 <View style={styles.itemCard}>
                   <View style={styles.itemHeader}>
                     <Text style={styles.itemProduto} numberOfLines={1}>
-                      {item.produto.nome}
+                      {item.produto.NOME}
                     </Text>
-                    <TouchableOpacity onPress={() => handleRemover(item.id)}>
+                    <TouchableOpacity onPress={() => handleRemover(item.CODIGO)}>
                       <Ionicons name="trash-outline" size={20} color="#FF3B30" />
                     </TouchableOpacity>
                   </View>
@@ -588,7 +683,7 @@ export default function NovaVenda() {
                         style={styles.qtdInput}
                         keyboardType="numeric"
                         value={item.quantidade.toString()}
-                        onChangeText={text => handleAlterarQuantidade(item.id, text)}
+                        onChangeText={text => handleAlterarQuantidade(item.CODIGO, text)}
                       />
                     </View>
                     
@@ -621,6 +716,7 @@ export default function NovaVenda() {
         )}
 
         {/* Botão Finalizar */}
+        {/*
         {itens.length > 0 && (
           <View style={styles.footer}>
             <TouchableOpacity
@@ -632,6 +728,7 @@ export default function NovaVenda() {
             </TouchableOpacity>
           </View>
         )}
+          */}
       </ScrollView>
     </KeyboardAvoidingView>
   );

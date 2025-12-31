@@ -11,23 +11,33 @@ import ContagemProduto from './src/pages/produto/ContagemProduto';
 import BuscaCliente from './src/pages/Clientes/BuscaCliente';
 import PedidoAberto from './src/pages/vendas/PedidoAberto';
 import LocalizarProduto from './src/pages/produto/LocalizarProduto';
+
+import { head } from 'lodash';
+import GerarVenda from './src/pages/vendas/GerarVenda';
 export default function App() {
   const Stack = createNativeStackNavigator();
   return (
-   <NavigationContainer>
-     <Stack.Navigator>
-       <Stack.Screen name="Menu" component={Menu} />
-       <Stack.Screen name="Cadastro de Clientes" component={CadastroCliente} />
-       <Stack.Screen name="Orcamentos" component={NovoOrcamento} />
-       <Stack.Screen name="Login" component={Login} />
-       <Stack.Screen name="Novo Pedido de Venda" component={NovaVenda} />
-       <Stack.Screen name="Contagem de Produto" component={ContagemProduto} />
-       <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
-       <Stack.Screen name="Pedidos Abertos" component={PedidoAberto} />
-       <Stack.Screen name="Localizar Produto" component={LocalizarProduto} />
-     </Stack.Navigator>
-   </NavigationContainer>
-     
+  <NavigationContainer>
+    <Stack.Navigator>
+      <Stack.Screen name="Login" component={Login}  screenOptions={{
+      headerStyle:{
+      
+        headerShown: false,
+      },
+      
+    }} />
+      <Stack.Screen name="Menu" component={Menu} />
+      <Stack.Screen name="Cadastro de Clientes" component={CadastroCliente} />
+      <Stack.Screen name="Orcamentos" component={NovoOrcamento} />
+      <Stack.Screen name="Gerar Venda" component={GerarVenda} />
+      <Stack.Screen name="Novo Pedido de Venda" component={NovaVenda} />
+      <Stack.Screen name="Contagem de Produto" component={ContagemProduto} />
+      <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
+      <Stack.Screen name="Pedidos Abertos" component={PedidoAberto} />
+    <Stack.Screen name="Localizar Produto" component={LocalizarProduto} />
+    </Stack.Navigator>
+    </NavigationContainer>
+    
   );
 }
 

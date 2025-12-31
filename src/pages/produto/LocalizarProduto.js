@@ -138,9 +138,8 @@ const ProdutoBuscarScreen = () => {
             {item.precoFormatado || `R$ ${item.preco?.toFixed(2) || '0,00'}`}
           </Text>
           {item.precoSugerido > 0 && (
-            <Text style={styles.precoSugerido}>
-              Sugerido: R$ {item.precoSugerido.toFixed(2)}
-            </Text>
+            <></>
+           
           )}
         </View>
       </View>
@@ -176,7 +175,7 @@ const ProdutoBuscarScreen = () => {
       {/* Estoque */}
       <View style={styles.estoqueContainer}>
         <View style={styles.estoqueItem}>
-          <Icon name="inventory" size={14} color="#007AFF" />
+          <Icon name="inventory" size={14} color="#2388edff" />
           <Text style={styles.estoqueLabel}>Estoque:</Text>
           <Text style={styles.estoqueValue}>{item.estoque || 0}</Text>
         </View>
@@ -190,11 +189,12 @@ const ProdutoBuscarScreen = () => {
       
       {/* Códigos de barras */}
       <View style={styles.codigosContainer}>
-        {(item.codigoBarras || item.COD_BARRAS) && (
+        {(item.codigo || item.id) && (
           <View style={styles.codigoItem}>
-            <Icon name="barcode" size={12} color="#999" />
+            <Icon name="qr-code" size={12} color="#999" />
             <Text style={styles.codigoText}>
-              {item.codigoBarras || item.COD_BARRAS}
+              Código: 
+              {item.codigo || item.id}
             </Text>
           </View>
         )}
@@ -217,11 +217,11 @@ const ProdutoBuscarScreen = () => {
           </View>
         )}
         
-        {item.PRECOSAI && (
+        {/*item.PRECOSAI && (
           <Text style={styles.precoSai}>
             Preço SAI: {item.PRECOSAI}
           </Text>
-        )}
+        )*/}
       </View>
     </View>
   );

@@ -62,7 +62,13 @@ function Menu() {
             icon: <MaterialCommunityIcons name="tag-search" size={32} color="#2D5A3D" />,
             screen: 'Localizar Produto',
             bgColor: "#F1F8E9"
-        }
+        },
+       /* {id: 7,
+            title:"Gerar Venda Teste",
+            icon:<MaterialCommunityIcons name="point-of-sale" size={32} color="#2D5A3D" />,
+            screen:"Gerar Venda",
+            bgColor:"#E8F5E9"
+        }*/
     ];
 
     // Agrupa os itens em pares para o layout de grid
@@ -80,12 +86,12 @@ function Menu() {
             >
                 {/* Header com logo */}
                 <View style={styles.header}>
-                    <Image 
-                        source={logo} 
-                        style={styles.logo} 
+                    <Image
+                        source={logo}
+                        style={styles.logo}
                         resizeMode="contain"
                     />
-                    <Text style={styles.title}>Menu Principal</Text>                    
+                    <Text style={styles.title}>Menu Principal</Text>
                 </View>
 
                 {/* Grid de botões */}
@@ -110,6 +116,14 @@ function Menu() {
                         </View>
                     ))}
                 </View>
+                <TouchableOpacity
+                    style={styles.menuLogoff}
+                    onPress={() => navigation.navigate('Login')}
+                    activeOpacity={0.7}
+                >
+                    
+                    <Text style={styles.buttonText}>Sair</Text>
+                </TouchableOpacity>
 
                 {/* Footer ou informações adicionais */}
                 <View style={styles.footer}>
@@ -186,6 +200,26 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E8F5E9',
         minHeight: 140,
+    },
+    menuLogoff: {
+        flex: 1,
+        marginHorizontal: 8,
+        borderRadius: 16,
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        backgroundColor:'#e6a6a6',
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#E8F5E9',
+        minHeight: 80,
     },
     iconContainer: {
         marginBottom: 12,

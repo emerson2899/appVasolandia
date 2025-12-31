@@ -1,295 +1,706 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  StyleSheet, 
-  ScrollView, 
-  KeyboardAvoidingView,
-  Platform 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StatusBar,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView
 } from 'react-native';
 import axios from 'axios';
-import { Button } from '@react-navigation/elements';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Entypo from '@expo/vector-icons/Entypo';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-export default function BuscaCliente() {
-  const [codigo, setCodigo] = useState('');
-  const [cliente, setCliente] = useState(null);
-  const [nome, setNome] = useState('');
-  const [telefone1, setTelefone1] = useState('');
-  const [endereco, setEndereco] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [carregado, setCarregado] = useState(false);
-  const [erro, setErro] = useState('');
+const BuscaCliente = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [produtos, setProdutos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [estatisticas, setEstatisticas] = useState(null);
+  const [timestamp, setTimestamp] = useState(null);
 
-  function Buscar() {
-    setErro('');
-    
-    if (!codigo.trim()) {
-      setErro('Digite um código para buscar');
+  // URL base da API
+  const API_URL = 'http://192.168.1.15:3000/api/clientes/seguro/buscar/nome';
+
+  // Função para buscar produtos
+  const buscarProdutos = async (nome = '') => {
+    // Se o nome estiver vazio, não faz a busca
+    if (nome.trim() === '') {
+      setProdutos([]);
+      setEstatisticas(null);
+      setTimestamp(null);
       return;
     }
 
-    axios.get(`http://192.168.1.13:3000/api/clientes/seguro/busca/?CODIGO=${codigo}`)
-      .then(response => {
-        setCarregado(true);
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get(`${API_URL}?nome=${encodeURIComponent(nome)}`);
+      
+      // Processa a resposta conforme a nova estrutura
+      if (response.data && response.data.data) {
+        setProdutos(response.data.data);
+        setEstatisticas(response.data.estatisticas);
+        setTimestamp(response.data.timestamp);
         
-        // Verifica se a resposta tem a estrutura esperada
-        if (response.data && response.data.data && response.data.data.CODIGO) {
-          const dados = response.data.data.CODIGO;
-          
-          setCliente(dados);
-          setNome(dados[1]?.trim() || '');
-          setEndereco(dados[3] || '');
-          setBairro(dados[4] || '');
-          setCidade(dados[5] || '');
-          setTelefone1(dados[8] || '');
-        } else {
-          setErro('Estrutura de dados inválida na resposta');
-          setCliente(null);
+        if (response.data.data.length === 0) {
+          Alert.alert('Aviso', 'Nenhum cliente encontrado');
         }
-      })
-      .catch(error => {
-        console.error('Erro na busca:', error);
-        setErro('Erro ao buscar cliente. Verifique a conexão.');
-        setCarregado(false);
-        setCliente(null);
-      });
-  }
+      } else {
+        setProdutos([]);
+        setEstatisticas(null);
+        setTimestamp(null);
+        Alert.alert('Aviso', 'Nenhum cliente encontrado');
+      }
+    } catch (err) {
+      setError('Erro ao buscar cliente');
+      console.error('Erro na requisição:', err);
+      
+      // Mensagens de erro específicas
+      if (err.response) {
+        Alert.alert('Erro', `Servidor retornou: ${err.response.status}`);
+      } else if (err.request) {
+        Alert.alert('Erro', 'Não foi possível conectar ao servidor');
+      } else {
+        Alert.alert('Erro', 'Erro ao fazer a requisição');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para buscar ao pressionar Enter ou botão de busca
+  const handleSearch = () => {
+    Keyboard.dismiss();
+    buscarProdutos(searchTerm);
+  };
+
+  // Função para atualizar a lista
+  const onRefresh = () => {
+    setRefreshing(true);
+    buscarProdutos(searchTerm).finally(() => setRefreshing(false));
+  };
+
+  // Formatar data/hora
+  const formatarData = (dataString) => {
+    if (!dataString) return '';
+    const data = new Date(dataString);
+    return data.toLocaleString('pt-BR');
+  };
+
+  // Função para renderizar o status do produto
+  const renderStatus = (produto) => {
+    if (!produto.ativo) {
+      return (
+        <View style={[styles.statusTag, styles.statusInativo]}>
+          <Icon name="block" size={12} color="#fff" />
+          <Text style={styles.statusText}>Inativo</Text>
+        </View>
+      );
+    }
+    
+    if (!produto.disponivel) {
+      return (
+        <View style={[styles.statusTag, styles.statusIndisponivel]}>
+          <Icon name="close" size={12} color="#fff" />
+          <Text style={styles.statusText}>Indisponível</Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={[styles.statusTag, styles.statusDisponivel]}>
+        <Icon name="check-circle" size={12} color="#fff" />
+        <Text style={styles.statusText}>Disponível</Text>
+      </View>
+    );
+  };
+
+  // Renderizar cada item do produto
+  const renderProdutoItem = ({ item }) => (
+    <View style={styles.produtoCard}>
+      <View style={styles.produtoHeader}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.produtoNome}>{item.NOME || 'Nome não disponível'}</Text>
+          
+        </View>
+        
+        <View style={styles.headerRight}>
+          <Text style={styles.produtoPreco}>
+            {item.CODIGO || `R$ ${item.preco?.toFixed(2) || '0,00'}`}
+          </Text>
+          {item.precoSugerido > 0 && (
+            <></>
+           
+          )}
+        </View>
+      </View>
+      
+      {/* Descrição */}
+      {item.descricao && (
+        <Text style={styles.produtoDescricao} numberOfLines={2}>
+          {item.descricao}
+        </Text>
+      )}
+      
+      {/* Informações principais */}
+      <View style={styles.infoRow}>
+        {(item.grupo || item.categoria) && (
+          <View style={styles.infoItem}>
+            <Icon name="category" size={14} color="#666" />
+            <Text style={styles.infoText}>
+              {item.CIDADE || item.CIDADE}
+            </Text>
+          </View>
+        )}
+        
+        {item.unidade && item.unidade !== 'UN' && (
+          <View style={styles.infoItem}>
+            <Icon name="straighten" size={14} color="#666" />
+            <Text style={styles.infoText}>
+              {item.CIDADE}
+            </Text>
+          </View>
+        )}
+      </View>
+      
+      {/* Estoque */}
+      <View style={styles.estoqueContainer}>
+        <View style={styles.estoqueItem}>
+          <Entypo name="location" size={16} color="#2517e6ff" />
+          <Text style={styles.estoqueLabel}>cidade:</Text>
+          <Text style={styles.estoqueValue}>{item.CIDADE || 0}</Text>
+        </View>
+        
+        <View style={styles.estoqueItem}>
+         
+          <Text style={styles.estoqueLabel}>uf:</Text>
+          <Text style={styles.estoqueValue}>{item.UF || 'Não Cadastrado'}</Text>
+        </View>
+      </View>
+      
+      {/* Telefone */}
+      <View style={styles.codigosContainer}>
+       <MaterialCommunityIcons name="phone" size={16} color="#2517e6ff" />
+        <Text style={styles.estoqueLabel}>Telefone:</Text>
+        <Text style={styles.estoqueValue}>{item.TELEFONE || 'Nao Cadastrado'}</Text>
+      </View>
+      
+      {/* EMAIL */}
+      <View style={styles.adicionaisContainer}>
+        <MaterialCommunityIcons name="email" size={16} color="#2517e6ff" />
+        <Text style={styles.estoqueLabel}>Email:</Text>
+        <Text style={styles.estoqueValue}>{item.EMAIL || 'Nao Cadastrado'}</Text>
+
+    
+      </View>
+    </View>
+  );
+
+  // Renderizar estatísticas
+  const renderEstatisticas = () => (
+    <View style={styles.estatisticasContainer}>
+      <View style={styles.estatisticasHeader}>
+        <Icon name="analytics" size={20} color="#007AFF" />
+        <Text style={styles.estatisticasTitle}>Estatísticas da Busca</Text>
+      </View>
+      
+      <View style={styles.estatisticasContent}>
+        <View style={styles.estatisticaItem}>
+          <Text style={styles.estatisticaLabel}>Termo pesquisado:</Text>
+          <Text style={styles.estatisticaValue}>{estatisticas.termoPesquisado}</Text>
+        </View>
+        
+        <View style={styles.estatisticaItem}>
+          <Text style={styles.estatisticaLabel}>Total encontrado:</Text>
+          <Text style={[styles.estatisticaValue, styles.totalEncontrado]}>
+            {estatisticas.totalEncontrado}
+          </Text>
+        </View>
+        
+        {timestamp && (
+          <View style={styles.estatisticaItem}>
+            <Text style={styles.estatisticaLabel}>Última atualização:</Text>
+            <Text style={styles.estatisticaValue}>
+              {formatarData(timestamp)}
+            </Text>
+          </View>
+        )}
+      </View>
+      
+      {estatisticas.sugestoes && estatisticas.sugestoes.length > 0 && (
+        <View style={styles.sugestoesContainer}>
+          <Text style={styles.sugestoesTitle}>Sugestões:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {estatisticas.sugestoes.map((sugestao, index) => (
+              <TouchableOpacity 
+                key={index}
+                style={styles.sugestaoTag}
+                onPress={() => {
+                  setSearchTerm(sugestao);
+                  buscarProdutos(sugestao);
+                }}
+              >
+                <Text style={styles.sugestaoText}>{sugestao}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+
+  // Renderizar lista vazia
+  const renderEmptyList = () => (
+    <View style={styles.emptyContainer}>
+      <Icon name="search-off" size={80} color="#ccc" />
+      <Text style={styles.emptyText}>
+        {searchTerm.trim() === '' 
+          ? 'Digite um termo para buscar clientes cadastrados' 
+          : estatisticas 
+            ? 'Nenhum cliente encontrado para esta busca'
+            : 'Digite um termo e clique em buscar'}
+      </Text>
+    </View>
+  );
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={true}
-        contentContainerStyle={styles.scrollContent}
-      >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+        
+        {/* Cabeçalho */}
         <View style={styles.header}>
           <Text style={styles.title}>Buscar Cliente</Text>
+          <Text style={styles.subtitle}>Encontre clientes pelo nome</Text>
         </View>
-        
-        <View style={styles.buscaContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o código do cliente"
-            value={codigo}
-            onChangeText={text => setCodigo(text)}
-            keyboardType="numeric"
-            returnKeyType="search"
-            onSubmitEditing={Buscar}
-          />
-          
-          <View style={styles.buttonContainer}>
-            <Button 
-              title="Buscar" 
-              color='#34d2ec' 
-              onPress={Buscar} 
+
+        {/* Barra de busca */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Icon name="search" size={24} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Digite o nome do Cliente..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
             />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')}>
+                <Icon name="clear" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
           </View>
+          
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={handleSearch}
+            disabled={loading}
+          >
+            <Icon name="search" size={20} color="#fff" />
+            <Text style={styles.searchButtonText}>Buscar</Text>
+          </TouchableOpacity>
         </View>
 
-        {erro ? (
-          <View style={styles.erroContainer}>
-            <Text style={styles.erroTexto}>{erro}</Text>
+        {/* Indicador de loading */}
+        {loading && !refreshing && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Buscando Clientes...</Text>
           </View>
-        ) : null}
+        )}
 
-        {carregado && cliente ? (
-          <View style={styles.resultadoContainer}>
-            <Text style={styles.sectionTitle}>Dados do Cliente</Text>
-            
-            <View style={styles.clienteCard}>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Código:</Text>
-                <Text style={styles.valor}>{cliente[0] || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Nome:</Text>
-                <Text style={[styles.valor, styles.valorDestaque]}>{nome || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Endereço:</Text>
-                <Text style={styles.valor}>{endereco || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Bairro:</Text>
-                <Text style={styles.valor}>{bairro || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Cidade:</Text>
-                <Text style={styles.valor}>{cidade || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>CEP:</Text>
-                <Text style={styles.valor}>{cliente[6] || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>UF:</Text>
-                <Text style={styles.valor}>{cliente[7] || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Telefone 1:</Text>
-                <Text style={styles.valor}>{telefone1 || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Celular:</Text>
-                <Text style={styles.valor}>{cliente[10] || 'Não informado'}</Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Data Cadastro:</Text>
-                <Text style={styles.valor}>
-                  {cliente[14] ? new Date(cliente[14]).toLocaleDateString('pt-BR') : 'Não informado'}
+        {/* Mensagem de erro */}
+        {error && !loading && (
+          <View style={styles.errorContainer}>
+            <Icon name="error-outline" size={50} color="#ff3b30" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => buscarProdutos(searchTerm)}
+            >
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Estatísticas */}
+        {estatisticas && !loading && !error && (
+          renderEstatisticas()
+        )}
+
+        {/* Lista de produtos */}
+        {!loading && !error && (
+          <FlatList
+            data={produtos}
+            renderItem={renderProdutoItem}
+            keyExtractor={(item, index) => `${item.codigoBarras || index}_${item.nome || ''}`}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            ListEmptyComponent={renderEmptyList}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListHeaderComponent={
+              estatisticas && produtos.length > 0 ? (
+                <Text style={styles.resultadosHeader}>
+                  {produtos.length} de {estatisticas.totalEncontrado} produto(s) mostrados
                 </Text>
-              </View>
-            </View>
-          </View>
-        ) : carregado ? (
-          <View style={styles.semResultadoContainer}>
-            <Text style={styles.semResultadoTexto}>Cliente não encontrado</Text>
-          </View>
-        ) : null}
-      </ScrollView>
-    </KeyboardAvoidingView>
+              ) : null
+            }
+          />
+        )}
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40, // Espaço extra no final
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    marginBottom: 25,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a1a1a',
   },
-  buscaContainer: {
-    marginBottom: 25,
-  },
-  input: {
-    height: 55,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 20,
-    paddingHorizontal: 15,
+  subtitle: {
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    color: '#666',
+    marginTop: 5,
   },
-  buttonContainer: {
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  resultadoContainer: {
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  clienteCard: {
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: '#333',
+  },
+  searchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#ff3b30',
+    textAlign: 'center',
+    marginHorizontal: 20,
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  estatisticasContainer: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 10,
     borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 3,
   },
-  infoRow: {
+  estatisticasHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  estatisticasTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginLeft: 8,
+  },
+  estatisticasContent: {
+    marginBottom: 12,
+  },
+  estatisticaItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  estatisticaLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  estatisticaValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  totalEncontrado: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  sugestoesContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
+  },
+  sugestoesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  sugestaoTag: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  sugestaoText: {
+    fontSize: 12,
+    color: '#007AFF',
+  },
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  resultadosHeader: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  produtoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  produtoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: 8,
+    marginBottom: 8,
   },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#555',
+  headerLeft: {
     flex: 1,
+    marginRight: 10,
   },
-  valor: {
-    fontSize: 15,
-    color: '#333',
-    flex: 1.5,
-    textAlign: 'right',
-    flexWrap: 'wrap',
+  headerRight: {
+    alignItems: 'flex-end',
   },
-  valorDestaque: {
+  produtoNome: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  statusTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: 4,
+  },
+  statusDisponivel: {
+    backgroundColor: '#34C759',
+  },
+  statusIndisponivel: {
+    backgroundColor: '#FF9500',
+  },
+  statusInativo: {
+    backgroundColor: '#FF3B30',
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  produtoPreco: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#34d2ec',
+    color: '#007AFF',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 8,
+  precoSugerido: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
-  semResultadoContainer: {
-    padding: 30,
+  produtoDescricao: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  estoqueContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  estoqueItem: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  semResultadoTexto: {
-    fontSize: 16,
+  estoqueLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    marginRight: 4,
+  },
+  estoqueValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  codigosContainer: {
+    marginBottom: 12,
+  },
+  codigoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  codigoText: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: 'monospace',
+    marginLeft: 4,
+  },
+  adicionaisContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 8,
+  },
+  adicionaisRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  adicionalText: {
+    fontSize: 11,
+    color: '#999',
+  },
+  precoSai: {
+    fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
   },
-  erroContainer: {
-    backgroundColor: '#ffebee',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f44336',
+  separator: {
+    height: 12,
   },
-  erroTexto: {
-    color: '#d32f2f',
-    fontSize: 14,
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 20,
+    marginHorizontal: 20,
   },
 });
+
+export default BuscaCliente;
