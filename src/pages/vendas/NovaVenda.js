@@ -15,7 +15,7 @@ import {
   Dimensions,
   SafeAreaView
 } from 'react-native';
-import { CameraView, Camera } from 'expo-camera';
+import { CameraView, Camera, useCameraPermissions } from 'expo-camera';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -25,8 +25,8 @@ import { debounce } from 'lodash';
 import { Button } from '@react-navigation/elements';
 
 export default function NovaVenda() {
-  let API_URL = 'http://192.168.1.15:3000/api/';
-  // Estados para Cliente
+  let API_URL = 'http://192.168.1.243:3000/api/';
+  // Estados para Cliente  
   const [buscaCliente, setBuscaCliente] = useState('');
   const [sugestoesClientes, setSugestoesClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
@@ -34,6 +34,8 @@ export default function NovaVenda() {
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteCodigo, setClienteCodigo] = useState('');
+  // permissao para camera
+  const [permission, requestPermission] = useCameraPermissions();
 
   // Estados para Produto
   const [codigoProduto, setCodigoProduto] = useState('');
@@ -60,6 +62,11 @@ export default function NovaVenda() {
   const quantidadeRef = useRef();
   const buscaClienteRef = useRef();
   const buscaProdutoRef = useRef();
+  // Estados gerais da venda
+const [descontoTotal, setDescontoTotal] = useState('0'); // %
+const [frete, setFrete] = useState('0'); // R$
+const [observacaoGeral, setObservacaoGeral] = useState('');
+
 
   // Debounced search functions/*
   const buscarClientesDebounced = useCallback(
@@ -71,7 +78,7 @@ export default function NovaVenda() {
 
       setLoadingClientes(true);
       try {
-        const response = await axios.get(`http://192.168.1.15:3000/api/clientes/seguro/buscar/nome?nome=${encodeURIComponent(clienteNome)}`)
+        const response = await axios.get(`http://192.168.1.243:3000/api/clientes/seguro/buscar/nome?nome=${encodeURIComponent(clienteNome)}`)
         setSugestoesClientes(response.data.data || []);
       } catch (error) {
         console.error('Erro ao buscar clientes:', error);
@@ -82,6 +89,24 @@ export default function NovaVenda() {
     }, 300),
     []
   );
+  const calcularSubtotalItens = () => {
+  return itens.reduce((total, item) => total + item.subtotal, 0);
+};
+
+const calcularDescontoGeral = () => {
+  const subtotal = calcularSubtotalItens();
+  const desconto = parseFloat(descontoTotal) || 0;
+  return subtotal * (desconto / 100);
+};
+
+const calcularTotalFinal = () => {
+  const subtotal = calcularSubtotalItens();
+  const descontoGeral = calcularDescontoGeral();
+  const valorFrete = parseFloat(frete) || 0;
+
+  return (subtotal - descontoGeral + valorFrete).toFixed(2);
+};
+
 
   const buscarProdutosDebounced = useCallback(
     debounce(async (termo) => {
@@ -92,8 +117,8 @@ export default function NovaVenda() {
 
       setLoadingProdutos(true);
       try {
-        const response = await axios.get(`http://192.168.1.15:3000/api/produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}` );
-      /*  const response = await fetch(`http://192.168.1.15:3000/api/produto/seguro/buscar/nome?=${encodeURIComponent(buscaProduto)}`);*/
+        const response = await axios.get(`http://192.168.1.243:3000/api/produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}` );
+      /*  const response = await fetch(`http://192.168.1.14:3000/api/produto/seguro/buscar/nome?=${encodeURIComponent(buscaProduto)}`);*/
         setSugestoesProdutos(response.data.data || []);
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);
@@ -106,7 +131,7 @@ export default function NovaVenda() {
   );
 
 function buscarProdutoCodigo(){
-  axios.get(`http://192.168.1.15:3000/api/produto/${codigoProduto}`)
+  axios.get(`http://192.168.1.243:3000/api/produto/${codigoProduto}`)
   .then(response => {
     setProdutoSelecionado(response.data.data);
   })
@@ -126,7 +151,7 @@ function buscarProdutoCodigo(){
   }, [nomeProduto, buscarProdutosDebounced]);*/
 
   function buscarProdutoCodigo() {
-    axios.get(`http://192.168.1.15:3000/api/produto/${codigoProduto}`)
+    axios.get(`http://192.168.1.243:3000/api/produto/${codigoProduto}`)
       .then(response => {
         setProdutoSelecionado(response.data.data);
       })
@@ -144,7 +169,7 @@ function buscarProdutoCodigo(){
       });
   }
   function buscarClientesNome() {
-    axios.get(`http://192.168.1.15:3000/api/clientes/seguro/buscar/nome?nome=${clienteNome}`)
+    axios.get(`http://192.168.1.243:3000/api/clientes/seguro/buscar/nome?nome=${clienteNome}`)
       .then(response => {
         setSugestoesClientes(response.data.data);
       })
@@ -172,6 +197,10 @@ function buscarProdutoCodigo(){
     Alert.alert('Cliente Selecionado', `${cliente.NOME}\n${cliente.cpf || ''}`);
   };
 
+  const finalizarVenda = () => {
+    alert('Venda finalizada com sucesso!');
+  }
+
   // Selecionar produto
   const selecionarProduto = (produto) => {
     setProdutoSelecionado(produto);
@@ -187,13 +216,13 @@ function buscarProdutoCodigo(){
 
     try {
       if (tipo === 'cliente') {
-      /*  const response = await axios.get(`http://192.168.1.15:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${clienteCodigo}`);*/
-      const response = await fetch(`http://192.168.1.15:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${codigo}`);
+      /*  const response = await axios.get(`http://192.168.1.14:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${clienteCodigo}`);*/
+      const response = await fetch(`http://192.168.1.243:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${codigo}`);
         if (response.data.data) {
           selecionarCliente(response.data.data);
         }
       } else {
-        const response = await axios.get(`http://192.168.1.15:3000/api/produto/${codigo}`);
+        const response = await axios.get(`http://192.168.1.243:3000/api/produto/${codigo}`);
         if (response.data.data) {
           selecionarProduto(response.data.data);
         }
@@ -245,8 +274,12 @@ function buscarProdutoCodigo(){
   const handleBarCodeScanned = ({ data }) => {
     if (!scanned) {
       setScanned(true);
+      setCodigoProduto(data);
       buscarPorCodigo(data, 'produto');
       setCameraActive(false);
+    }
+    else {
+      setCodigoProduto(data);
     }
   };
 
@@ -287,23 +320,28 @@ function buscarProdutoCodigo(){
 
   // Remover item
   const handleRemover = (id) => {
-    setItens(itens.filter(item => item.id !== id));
+   setItens(prevItens => prevItens.filter(item => item.id !== id));
   };
 
   // Alterar quantidade
-  const handleAlterarQuantidade = (id, novaQtd) => {
-    setItens(itens.map(item => {
+const handleAlterarQuantidade = (id, novaQtd) => {
+  setItens(prevItens =>
+    prevItens.map(item => {
       if (item.id === id) {
-        const quantidade = parseInt(novaQtd) || 0;
+        const qtd = parseInt(novaQtd) || 0;
         return {
           ...item,
-          quantidade,
-          subtotal: item.produto.PRECOSAI * quantidade * (1 - item.desconto / 100)
+          quantidade: qtd,
+          subtotal:
+            item.precoUnitario *
+            qtd *
+            (1 - item.desconto / 100),
         };
       }
       return item;
-    }));
-  };
+    })
+  );
+};
 
   // Calcular total
   const calcularTotal = () => {
@@ -358,6 +396,7 @@ function buscarProdutoCodigo(){
   };
 
   return (
+    <SafeAreaView style={{flex: 1, marginBottom: 50}}>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -410,14 +449,24 @@ function buscarProdutoCodigo(){
                     value={clienteNome}
                     onChangeText={setClienteNome}
                     autoCapitalize="words"
-                  />
-                  <Button
+                  />{/* <Button
                     title="Buscar"
                     backgroundColor="#2D5A3D"
                     onPress={buscarClientesNome}
                     color="#030e07ff"
                     style={styles.buscarButton}
-                  />
+                  />*/}
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#2D5A3D',
+                      borderRadius: 8,
+                      padding: 10,
+                      marginLeft: 10,
+                    }}
+                    onPress={buscarClientesNome}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>Buscar</Text>
+                  </TouchableOpacity>            
                   {loadingClientes && (
                     <ActivityIndicator size="small" color="#2D5A3D" style={styles.inputLoading} />
                   )}
@@ -425,25 +474,23 @@ function buscarProdutoCodigo(){
                 
                 {/* Sugestões de Clientes */}
                 {sugestoesClientes.length > 0 && (
-                  <SafeAreaView>
-                    <ScrollView>
+                 
                        <View style={styles.sugestoesContainer}>
                   
                     <FlatList
                       data={sugestoesClientes}
                       keyExtractor={(item) => item.id?.toString() || item.codigo}
                       renderItem={renderClienteItem}
-                      scrollEnabled={false}
+                      scrollEnabled={true}
                       nestedScrollEnabled={true}
                     />
                     
                    
                   </View>
 
-                    </ScrollView>
-                  </SafeAreaView>
+                
 
-                 
+                
                 )}
                 
                 {buscaCliente && sugestoesClientes.length === 0 && !loadingClientes && (
@@ -517,13 +564,25 @@ function buscarProdutoCodigo(){
                       onChangeText={setNomeProduto}
                       autoCapitalize="none"
                     />
-                    <Button
+                    {/* <Button
                       title="Buscar"
                       backgroundColor="#2D5A3D"
                       onPress={buscarProdutoNome}
                       color="#030e07ff"
                       style={styles.buscarButton}
-                    />
+                    />*/}
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#2D5A3D',
+                      borderRadius: 8,
+                      padding: 10,
+                      marginLeft: 10,
+                    }}
+                    onPress={buscarProdutoNome}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>Buscar</Text>
+                  </TouchableOpacity>
+                  
                     {loadingProdutos && (
                       <ActivityIndicator size="small" color="#2D5A3D" style={styles.inputLoading} />
                     )}
@@ -660,58 +719,124 @@ function buscarProdutoCodigo(){
               <Text style={styles.sectionTitle}>Itens da Venda</Text>
               <Text style={styles.itemCount}>{itens.length}</Text>
             </View>
-            
             <FlatList
-              data={itens}
-              keyExtractor={item => item.id}
-              scrollEnabled={false}
-              renderItem={({ item }) => (
-                <View style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemProduto} numberOfLines={1}>
-                      {item.produto.NOME}
-                    </Text>
-                    <TouchableOpacity onPress={() => handleRemover(item.CODIGO)}>
-                      <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <View style={styles.itemDetalhes}>
-                    <View style={styles.itemQuantidade}>
-                      <Text style={styles.itemLabel}>Qtd:</Text>
-                      <TextInput
-                        style={styles.qtdInput}
-                        keyboardType="numeric"
-                        value={item.quantidade.toString()}
-                        onChangeText={text => handleAlterarQuantidade(item.CODIGO, text)}
-                      />
-                    </View>
-                    
-                    <View style={styles.itemValores}>
-                      <Text style={styles.itemPreco}>
-                        R$ {item.produto.preco?.toFixed(2)} uni
-                      </Text>
-                      <Text style={styles.itemSubtotal}>
-                        R$ {item.subtotal.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  {(item.desconto > 0 || item.observacao) && (
-                    <View style={styles.itemInfo}>
-                      {item.desconto > 0 && (
-                        <Text style={styles.itemDesconto}>Desc: {item.desconto}%</Text>
-                      )}
-                      {item.observacao && (
-                        <Text style={styles.itemObservacao} numberOfLines={1}>
-                          {item.observacao}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </View>
-              )}
-            />
+  data={itens}
+  keyExtractor={item => item.id}
+  scrollEnabled={false}
+  renderItem={({ item }) => (
+    <View style={styles.itemCard}>
+      <View style={styles.itemHeader}>
+        <Text style={styles.itemProduto} numberOfLines={1}>
+          {item.produto.nome}
+        </Text>
+
+        {/* ✅ PASSANDO item.id */}
+        <TouchableOpacity onPress={() => handleRemover(item.id)}>
+          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.itemDetalhes}>
+        <View style={styles.itemQuantidade}>
+          <Text style={styles.itemLabel}>Qtd:</Text>
+          <TextInput
+            style={styles.qtdInput}
+            keyboardType="numeric"
+            value={item.quantidade.toString()}
+            onChangeText={text =>
+              handleAlterarQuantidade(item.id, text)
+            }
+          />
+        </View>
+
+        <View style={styles.itemValores}>
+          <Text style={styles.itemPreco}>
+            R$ {item.precoUnitario.toFixed(2)} uni
+          </Text>
+          <Text style={styles.itemSubtotal}>
+            R$ {item.subtotal.toFixed(2)}
+          </Text>
+        </View>
+      </View>
+
+      {(item.desconto > 0 || item.observacao) && (
+        <View style={styles.itemInfo}>
+          {item.desconto > 0 && (
+            <Text style={styles.itemDesconto}>
+              Desc: {item.desconto}%
+            </Text>
+          )}
+          {item.observacao && (
+            <Text
+              style={styles.itemObservacao}
+              numberOfLines={1}
+            >
+              {item.observacao}
+            </Text>
+          )}
+        </View>
+      )}
+    </View>
+  )}
+/>
+{/* Resumo da Venda */}
+{itens.length > 0 && (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>Resumo da Venda</Text>
+
+    <View style={styles.row}>
+      <View style={styles.col}>
+        <Text style={styles.label}>Desconto total (%)</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="numeric"
+          value={descontoTotal}
+          onChangeText={setDescontoTotal}
+          placeholder="0"
+        />
+      </View>
+
+      <View style={styles.col}>
+        <Text style={styles.label}>Frete (R$)</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="numeric"
+          value={frete}
+          onChangeText={setFrete}
+          placeholder="0,00"
+        />
+      </View>
+    </View>
+
+    <Text style={styles.label}>Observações da venda</Text>
+    <TextInput
+      style={[styles.input, styles.textArea]}
+      value={observacaoGeral}
+      onChangeText={setObservacaoGeral}
+      placeholder="Observações gerais da venda"
+      multiline
+      numberOfLines={3}
+    />
+
+    <View style={styles.totalResumo}>
+      <Text style={styles.resumoLinha}>
+        Subtotal: R$ {calcularSubtotalItens().toFixed(2)}
+      </Text>
+      <Text style={styles.resumoLinha}>
+        Desconto geral: - R$ {calcularDescontoGeral().toFixed(2)}
+      </Text>
+      <Text style={styles.resumoLinha}>
+        Frete: R$ {(parseFloat(frete) || 0).toFixed(2)}
+      </Text>
+      <Text style={styles.totalFinal}>
+        Total Final: R$ {calcularTotalFinal()}
+      </Text>
+    </View>
+  </View>
+)}
+
+            
+            
           </View>
         )}
 
@@ -729,8 +854,16 @@ function buscarProdutoCodigo(){
           </View>
         )}
           */}
+          <TouchableOpacity
+            style={styles.btnFinalizar}
+            onPress={finalizarVenda}
+          >
+            <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+            <Text style={styles.btnFinalizarText}>Finalizar Venda</Text>
+          </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -1171,4 +1304,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginLeft: 10,
   },
+  totalResumo: {
+  marginTop: 15,
+  paddingTop: 15,
+  borderTopWidth: 1,
+  borderTopColor: '#EEE',
+},
+
+resumoLinha: {
+  fontSize: 14,
+  color: '#555',
+  marginBottom: 4,
+},
+
+totalFinal: {
+  fontSize: 20,
+  fontWeight: '700',
+  color: '#2D5A3D',
+  marginTop: 8,
+},
 });

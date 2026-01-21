@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,19 +13,31 @@ import {
 } from 'react-native';
 import { MaterialIcons, FontAwesome5, Ionicons, Feather } from '@expo/vector-icons';
 import axios from 'axios';
+import { set } from 'lodash';
 
 export default function CadastroCliente() {
-  const API_BASE_URL = 'http://192.168.1.133000/api';
+  const API_BASE_URL = 'http://192.168.56.1.3000/api';
   
   // Estados dos campos
   const [nome, setNome] = useState('');
+  const [fantasia, setFantasia] = useState('');
   const [telefone1, setTelefone1] = useState('');
   const [telefone2, setTelefone2] = useState('');
   const [endereco, setEndereco] = useState('');
+  const [celular, setCelular] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [cep, setCep] = useState('');
+  const [uf, setUf] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [rgIe, setRgIe] = useState('');
   const [email, setEmail] = useState('');
-  //const [observacoes, setObservacoes] = useState('');
-  
+  const [credito, setCredito] = useState('');
+  const [pessoa, setPessoa] = useState('');
+  const [observacoes, setObservacoes] = useState('');
+  const [data_nasc, setDataNasc] = useState('');
+  const date = new Date();
+  const data_cad = date.toISOString().split('T')[0];
   // Estados adicionais
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,6 +45,15 @@ export default function CadastroCliente() {
 
   // Validação de campos obrigatórios
   const camposValidos = nome.trim() !== '' && telefone1.trim() !== '' && endereco.trim() !== '';
+
+  useEffect(() => {
+  if(tipoCliente == 'PF'){
+    setPessoa('F');
+  }
+  if(tipoCliente == 'PJ'){
+    setPessoa('J');
+  }
+  }, [tipoCliente]);
 
   // Formatar telefone
   const formatarTelefone = (value) => {
@@ -51,6 +72,14 @@ export default function CadastroCliente() {
       return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     } else {
       return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+  };
+
+  const formatarRGIE = (value, tipo) => {
+    if (tipo === 'PF') {
+      return value.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, '$1.$2.$3-$4');
+    } else {
+      return value.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, '$1.$2.$3/$4');
     }
   };
 
@@ -79,6 +108,10 @@ export default function CadastroCliente() {
       telefone2: telefone2.replace(/\D/g, ''),
       email: email.trim() || null,
       endereco: endereco.trim(),
+      bairro: bairro.trim(),
+      cidade: cidade.trim(),
+      cep: cep.replace(/\D/g, ''),
+      uf: uf.trim(),
      // observacoes: observacoes.trim() || null,
       data_cadastro: new Date().toISOString().split('T')[0]
     };
@@ -113,12 +146,40 @@ export default function CadastroCliente() {
   const limparFormulario = () => {
     setNome('');
     setTelefone1('');
+    
     setTelefone2('');
     setEndereco('');
+    setBairro('');
+    setCidade('');
+    setCep('');
+    setUf('');
     setCpfCnpj('');
     setEmail('');
     setObservacoes('');
   };
+
+  function enviarDados(){
+    axios.post('http://192.168.56.1:3000/api/clientes/novo/cliente', {
+      NOME: nome,
+      FANTASIA: fantasia,
+      ENDERECO: endereco,
+      BAIRRO: bairro,
+      CIDADE: cidade,
+      CEP: cep,
+      UF: uf,
+      FONE1: telefone1,
+      FONE2: telefone2,
+      CELULAR: celular,
+      CPF_CGC: cpfCnpj,
+      RG_IE: rgIe,
+      DATA_CAD: data_cad,
+      DATA_NASC: data_nasc,
+      EMAIL: email,
+      CREDITO: credito,
+      PESSOA: pessoa,
+      OBS: observacoes
+    })
+  }
 
   return (
     <KeyboardAvoidingView
@@ -206,6 +267,31 @@ export default function CadastroCliente() {
               autoCapitalize="words"
             />
           </View>
+          {
+            tipoCliente === 'PJ' && (
+              <>
+              <Text>Nome Fantasia</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Digite o nome fantasia"
+                value={fantasia}
+                onChangeText={setFantasia}
+                autoCapitalize="words"
+              />
+              </>
+          )}
+          <Text style={styles.label}>Data de Nascimento</Text>
+          <View style={styles.inputContainer}>
+            <Feather name="calendar" size={20} color="#999" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="DD/MM/AAAA"
+              value={data_nasc}
+              onChangeText={setDataNasc}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+          </View>
 
           <Text style={styles.label}>
             {tipoCliente === 'PF' ? 'CPF' : 'CNPJ'}
@@ -217,6 +303,18 @@ export default function CadastroCliente() {
               placeholder={tipoCliente === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
               value={cpfCnpj}
               onChangeText={(text) => setCpfCnpj(formatarCpfCnpj(text, tipoCliente))}
+              keyboardType="numeric"
+              maxLength={tipoCliente === 'PF' ? 14 : 18}
+            />
+          </View>
+          <Text style={styles.label}>{tipoCliente === 'PF' ? 'RG' : 'IE'}</Text>
+          <View style={styles.inputContainer}>
+            <Feather name="file-text" size={20} color="#999" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder={tipoCliente === 'PF' ? '00.000.000-00' : '00.000.000/0000'}
+              value={rgIe}
+              onChangeText={setRgIe}
               keyboardType="numeric"
               maxLength={tipoCliente === 'PF' ? 14 : 18}
             />
@@ -270,6 +368,18 @@ export default function CadastroCliente() {
               maxLength={15}
             />
           </View>
+          <Text style={styles.label}>Celular</Text>
+          <View style={styles.inputContainer}>
+            <Feather name="phone-call" size={20} color="#999" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="(00) 00000-0000"
+              value={celular}
+              onChangeText={(text) => setCelular(formatarTelefone(text))}
+              keyboardType="phone-pad"
+              maxLength={15}
+            />
+            </View>
         </View>
 
         {/* Endereço */}
@@ -286,18 +396,44 @@ export default function CadastroCliente() {
             <Feather name="map-pin" size={20} color="#999" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Rua, número, bairro, cidade"
+              placeholder="Rua, número, bairro"
               value={endereco}
               onChangeText={setEndereco}
               multiline
               numberOfLines={2}
               textAlignVertical="top"
             />
+            <Text style={styles.label}>Cidade</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Cidade"
+              value={cidade}
+              onChangeText={setCidade}
+            />
+            <Text style={styles.label}>Estado</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="UF"
+              value={uf}
+              onChangeText={setUf}
+            />
+            <Text style={styles.label} >CEP</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="CEP"
+              value={cep}
+              onChangeText={(text) => setCep(formatarCep(text))}
+              keyboardType="numeric"
+              maxLength={9}
+            />
+            
+
           </View>
+    
         </View>
 
-        {/* Observações */}
-        {/*
+        Observações
+        
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             <Feather name="edit-2" size={18} color="#2D5A3D" />
@@ -316,7 +452,7 @@ export default function CadastroCliente() {
             />
           </View>
         </View>
-*/}
+
 
         {/* Botões */}
         <View style={styles.footer}>
@@ -331,7 +467,7 @@ export default function CadastroCliente() {
 
             <TouchableOpacity
               style={[styles.button, styles.submitButton, !camposValidos && styles.buttonDisabled]}
-              onPress={handleCadastro}
+              onPress={enviarDados}
               disabled={!camposValidos || loading}
             >
               {loading ? (

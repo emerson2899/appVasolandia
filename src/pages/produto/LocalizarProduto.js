@@ -27,7 +27,7 @@ const ProdutoBuscarScreen = () => {
   const [timestamp, setTimestamp] = useState(null);
 
   // URL base da API
-  const API_URL = 'http://192.168.1.13:3000/api/produto/seguro/buscar/nome';
+  const API_URL = 'http://192.168.1.14:3000/api/produto/seguro/buscar/nome';
 
   // Função para buscar produtos
   const buscarProdutos = async (nome = '') => {

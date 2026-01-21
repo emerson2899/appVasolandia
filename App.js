@@ -11,6 +11,7 @@ import ContagemProduto from './src/pages/produto/ContagemProduto';
 import BuscaCliente from './src/pages/Clientes/BuscaCliente';
 import PedidoAberto from './src/pages/vendas/PedidoAberto';
 import LocalizarProduto from './src/pages/produto/LocalizarProduto';
+import ItensPedido from './src/pages/Pedidos/ItensPedido';
 
 import { head } from 'lodash';
 import GerarVenda from './src/pages/vendas/GerarVenda';
@@ -35,6 +36,7 @@ export default function App() {
       <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
       <Stack.Screen name="Pedidos Abertos" component={PedidoAberto} />
     <Stack.Screen name="Localizar Produto" component={LocalizarProduto} />
+    <Stack.Screen name="Itens do Pedido" component={ItensPedido} />
     </Stack.Navigator>
     </NavigationContainer>
     
