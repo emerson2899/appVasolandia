@@ -10,7 +10,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  SafeAreaView,
+  ScrollView
 } from 'react-native';
 import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -56,7 +58,15 @@ export default function LoginVendedor({ navigation }) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Verificação mock - substitua pela sua lógica real
-      const vendedoresValidos = ['001', '002', '003', '123', '456'];
+      const vendedores ={        
+        '1': 'Erica',
+        '2': 'Marcio',
+        '4': 'Kayo',
+        '5': 'Alice',
+        '6': 'Denis',
+        '7': 'Wellington',
+      }
+      const vendedoresValidos = ['1', '2', '4', '5', '6','8'];
       const codigoNumerico = codigoVendedor.trim();
       
       if (vendedoresValidos.includes(codigoNumerico)) {
@@ -70,7 +80,7 @@ export default function LoginVendedor({ navigation }) {
         // Salvar sessão
         await AsyncStorage.setItem('vendedorLogado', JSON.stringify({
           codigo: codigoNumerico,
-          nome: `Vendedor ${codigoNumerico}`,
+          nome: vendedores[codigoNumerico],
           dataLogin: new Date().toISOString()
         }));
         
@@ -79,7 +89,7 @@ export default function LoginVendedor({ navigation }) {
         
         Alert.alert(
           'Login realizado!',
-          `Bem-vindo, Vendedor ${codigoNumerico}!`,
+          `Bem-vindo, Vendedor ${codigoNumerico} - ${vendedores[codigoNumerico]}!`,
           [{ text: 'OK' }]
         );
       } else {
@@ -105,6 +115,8 @@ export default function LoginVendedor({ navigation }) {
   };
 
   return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -222,6 +234,8 @@ export default function LoginVendedor({ navigation }) {
         </View>
       </View>
     </KeyboardAvoidingView>
+    </ScrollView>
+    </SafeAreaView>
   );
 }
 

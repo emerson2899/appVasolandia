@@ -23,8 +23,11 @@ import Feather from '@expo/vector-icons/Feather';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import { Button } from '@react-navigation/elements';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import GerarVenda from './GerarVenda';
 
 export default function NovaVenda() {
+  const codigoVendedor = AsyncStorage.getItem ('codigoVendedor');
   let API_URL = 'http://192.168.1.243:3000/api/';
   // Estados para Cliente  
   const [buscaCliente, setBuscaCliente] = useState('');
@@ -178,6 +181,16 @@ function buscarProdutoCodigo(){
       });
   }
 
+  function bucarClienteCodigo(){
+    axios.get(`http://localhost:3000/api/produto/busca/segura/estruturada/codigo?codigo=${clienteCodigo}`)
+    .then(response => {
+      setClienteSelecionado(response.data.data);
+    })
+    .catch(error => {
+      console.error('Erro ao buscar clientes:', error);
+    });
+  }
+
   // Timer da câmera
   useEffect(() => {
     if (cameraActive && timeLeft > 0) {
@@ -198,7 +211,12 @@ function buscarProdutoCodigo(){
   };
 
   const finalizarVenda = () => {
-    alert('Venda finalizada com sucesso!');
+   // alert('Venda finalizada com sucesso!');
+    axios.post('http://192.168.1.243:3000/api/vendas/nova/venda', {
+      CLIENTE: clienteSelecionado,
+      PRODUTO: produtoSelecionado,
+      QUANTIDADE: quantidade
+    })
   }
 
   // Selecionar produto
@@ -258,6 +276,14 @@ function buscarProdutoCodigo(){
   } catch (error) {
    console.log(error);
   }
+ }
+
+ function GerarVenda(){
+  axios.post('http://192.168.1.243:3000/api/vendas/nova/venda', {
+    CLIENTE: clienteSelecionado,
+    PRODUTO: produtoSelecionado,
+    QUANTIDADE: quantidade
+  })
  }
 
   // Scanner de código de barras
@@ -342,6 +368,8 @@ const handleAlterarQuantidade = (id, novaQtd) => {
     })
   );
 };
+
+
 
   // Calcular total
   const calcularTotal = () => {
@@ -856,7 +884,7 @@ const handleAlterarQuantidade = (id, novaQtd) => {
           */}
           <TouchableOpacity
             style={styles.btnFinalizar}
-            onPress={finalizarVenda}
+            onPress={GerarVenda}
           >
             <Ionicons name="checkmark-circle" size={24} color="#FFF" />
             <Text style={styles.btnFinalizarText}>Finalizar Venda</Text>

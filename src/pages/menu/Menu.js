@@ -32,7 +32,7 @@ function Menu() {
             id: 2,
             title: "Orçamentos",
             icon: <Entypo name="open-book" size={32} color="#2D5A3D" />,
-            screen: 'Orcamentos',
+            screen: 'Menu Orcamentos',
             bgColor: "#F1F8E9"
         },
         {
@@ -63,8 +63,8 @@ function Menu() {
             screen: 'Localizar Produto',
             bgColor: "#F1F8E9"
         },
-       /* {id: 7,
-            title:"Gerar Venda Teste",
+      /* {id: 7,
+            title:"Novo Pedido de Venda",
             icon:<MaterialCommunityIcons name="point-of-sale" size={32} color="#2D5A3D" />,
             screen:"Gerar Venda",
             bgColor:"#E8F5E9"
