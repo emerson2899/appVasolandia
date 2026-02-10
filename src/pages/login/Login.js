@@ -40,6 +40,8 @@ export default function LoginVendedor({ navigation }) {
     carregarCodigoSalvo();
   }, []);
 
+
+
   const handleLogin = async () => {
     if (!codigoVendedor.trim()) {
       Alert.alert('Código obrigatório', 'Digite o código do vendedor');

@@ -21,13 +21,29 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import axios from 'axios';
-import { debounce } from 'lodash';
+import { debounce, get } from 'lodash';
 import { Button } from '@react-navigation/elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import GerarVenda from './GerarVenda';
+
 
 export default function NovaVenda() {
-  const codigoVendedor = AsyncStorage.getItem ('codigoVendedor');
+ // const codigoVendedor = AsyncStorage.getItem('vendedorLogado');
+  async function getCodigoVendedor() {
+  try {
+    const vendedorLogado= await AsyncStorage.getItem('vendedorLogado');
+    
+    if (vendedorLogado) {
+      const vendedor = JSON.parse(vendedorLogado);
+      return vendedor.codigo;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Erro ao obter código do vendedor:', error);
+    return null;
+  }
+}
+  
   let API_URL = 'http://192.168.1.243:3000/api/';
   // Estados para Cliente  
   const [buscaCliente, setBuscaCliente] = useState('');
@@ -67,6 +83,7 @@ export default function NovaVenda() {
   const buscaProdutoRef = useRef();
   // Estados gerais da venda
 const [descontoTotal, setDescontoTotal] = useState('0'); // %
+const [total, setTotal] = useState('0'); // R$
 const [frete, setFrete] = useState('0'); // R$
 const [observacaoGeral, setObservacaoGeral] = useState('');
 
@@ -278,13 +295,60 @@ function buscarProdutoCodigo(){
   }
  }
 
- function GerarVenda(){
-  axios.post('http://192.168.1.243:3000/api/vendas/nova/venda', {
-    CLIENTE: clienteSelecionado,
-    PRODUTO: produtoSelecionado,
-    QUANTIDADE: quantidade
-  })
- }
+ function handleGerarVenda(){
+  
+alert('Venda gerada com sucesso!')
+axios.post('http://192.168.1.243:3000/api/pedidos/novo/pedido', {
+  VALOR: calcularTotal(),
+  CODIGO: clienteSelecionado.CODIGO,
+  NOME: clienteSelecionado.NOME,
+  VENDEDOR: getCodigoVendedor(),
+ // CONDICAO: 1,
+ // VENCIMENTO: '',
+//  DATA_PAGO:'',
+  PAGO: 'N',
+  GASTO: 0,
+  LUCCRO: 0,
+  ADIANTADO:0,
+  NOTA:'',
+  CONDICAO: '1',
+  CANELADO:'N',
+  CUPON:'',
+  NNOTA: 0,
+  FILIAL: 0,
+  COMISSAO: 0,
+  BV: '',
+  TERMINAL: '',
+  EMPRESA: 1,
+  DOLAR: 'N',
+  COMISSIONADO: 0,
+  COD_FORMA: 0,
+  CURSO: '',
+  NUM_OS: 0,
+  GASTO_WEB: 0,
+  NOME_TERMINAL: 'APLICATIVO MOBILE',
+  OBSERVACAO: '',
+  QUANTIDADE: quantidade,
+  PRODUTOS: itens,
+  
+ // QUANTIDADE: quantidade,
+ //PRODUTOS: itens
+}
+).then(response => {
+  if (response.status == 201) {
+    alert('Venda gerada com sucesso'+'\n'+response.data);
+    console.log(response.data);
+  } else {
+    alert('Erro ao gerar venda');
+  }
+} )
+.catch(error => {
+  console.log(error);
+  alert('Erro ao gerar venda');
+}
+
+)
+}
 
   // Scanner de código de barras
   const askForCameraPermission = async () => {
@@ -374,6 +438,7 @@ const handleAlterarQuantidade = (id, novaQtd) => {
   // Calcular total
   const calcularTotal = () => {
     return itens.reduce((total, item) => total + item.subtotal, 0).toFixed(2);
+    setTotal(total.toFixed(2));
   };
 
   // Render item cliente
@@ -852,6 +917,7 @@ const handleAlterarQuantidade = (id, novaQtd) => {
       </Text>
       <Text style={styles.resumoLinha}>
         Desconto geral: - R$ {calcularDescontoGeral().toFixed(2)}
+      
       </Text>
       <Text style={styles.resumoLinha}>
         Frete: R$ {(parseFloat(frete) || 0).toFixed(2)}
@@ -884,7 +950,7 @@ const handleAlterarQuantidade = (id, novaQtd) => {
           */}
           <TouchableOpacity
             style={styles.btnFinalizar}
-            onPress={GerarVenda}
+            onPress={handleGerarVenda}
           >
             <Ionicons name="checkmark-circle" size={24} color="#FFF" />
             <Text style={styles.btnFinalizarText}>Finalizar Venda</Text>
