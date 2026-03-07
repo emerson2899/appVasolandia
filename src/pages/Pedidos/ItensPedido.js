@@ -36,7 +36,7 @@ function ItensPedido() {
     try {
       setError(null);
       const response = await axios.get(
-        `http://192.168.1.243:3000/api/pedidos/listar/relacao/pedido?pedido=${codigoPedido}`
+        `http://3.233.239.156:3000/api/pedidos/listar/relacao/pedido?pedido=${codigoPedido}`
       );
       
       console.log("Dados recebidos:", response.data.data);
@@ -206,7 +206,7 @@ function ItensPedido() {
                 <View style={styles.itemTotal}>
                   <Text style={styles.totalLabel}>Subtotal:</Text>
                   <Text style={styles.totalValue}>
-                    R$ {((item.QUANTIDADE || 1) * (item.VALOR || item.valor || 0)).toFixed(2)}
+                    R$ {((item.QUANTIDADE || 1) * (item.VALORTOT || item.VALORTOT || 0)).toFixed(2)}
                   </Text>
                 </View>
               </View>

@@ -29,7 +29,7 @@ function GerarVenda() {
     const [modalProdutoVisible, setModalProdutoVisible] = useState(false);
     const [modalFinalizarPedido, setModalFinalizarPedido] = useState(false);
     const [codigoPedido, setCodigoPedido] = useState('');
-    let API_URL = 'http://192.168.1.13:3000/api/clientes/seguro/buscar';
+    let API_URL = 'http://3.233.239.156:3000/api/clientes/seguro/buscar';
 
     function ModalCliente() {
         setModalClienteVisible(true);

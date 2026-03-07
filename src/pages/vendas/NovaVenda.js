@@ -24,6 +24,7 @@ import axios from 'axios';
 import { debounce, get } from 'lodash';
 import { Button } from '@react-navigation/elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Printer } from 'expo-print';
 
 
 export default function NovaVenda() {
@@ -34,7 +35,7 @@ export default function NovaVenda() {
     
     if (vendedorLogado) {
       const vendedor = JSON.parse(vendedorLogado);
-      return vendedor.codigo;
+      return vendedor.CODIGO;
     }
     
     return null;
@@ -43,8 +44,13 @@ export default function NovaVenda() {
     return null;
   }
 }
+
+function imprimirVenda(){
+  const print = new Printer.Printer();
+  print.printAsync();
+}
   
-  let API_URL = 'http://192.168.1.243:3000/api/';
+  let API_URL = 'http://3.233.239.156:3000/api/';
   // Estados para Cliente  
   const [buscaCliente, setBuscaCliente] = useState('');
   const [sugestoesClientes, setSugestoesClientes] = useState([]);
@@ -98,7 +104,7 @@ const [observacaoGeral, setObservacaoGeral] = useState('');
 
       setLoadingClientes(true);
       try {
-        const response = await axios.get(`http://192.168.1.243:3000/api/clientes/seguro/buscar/nome?nome=${encodeURIComponent(clienteNome)}`)
+        const response = await axios.get(`http://3.233.239.156:3000/api/clientes/seguro/buscar/nome?nome=${encodeURIComponent(clienteNome)}`)
         setSugestoesClientes(response.data.data || []);
       } catch (error) {
         console.error('Erro ao buscar clientes:', error);
@@ -137,7 +143,7 @@ const calcularTotalFinal = () => {
 
       setLoadingProdutos(true);
       try {
-        const response = await axios.get(`http://192.168.1.243:3000/api/produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}` );
+        const response = await axios.get(`http://3.233.239.156:3000/api/produto/seguro/buscar/nome?nome=${encodeURIComponent(nomeProduto)}` );
       /*  const response = await fetch(`http://192.168.1.14:3000/api/produto/seguro/buscar/nome?=${encodeURIComponent(buscaProduto)}`);*/
         setSugestoesProdutos(response.data.data || []);
       } catch (error) {
@@ -189,7 +195,7 @@ function buscarProdutoCodigo(){
       });
   }
   function buscarClientesNome() {
-    axios.get(`http://192.168.1.243:3000/api/clientes/seguro/buscar/nome?nome=${clienteNome}`)
+    axios.get(`http://3.233.239.156:3000/api/clientes/seguro/buscar/nome?nome=${clienteNome}`)
       .then(response => {
         setSugestoesClientes(response.data.data);
       })
@@ -252,12 +258,12 @@ function buscarProdutoCodigo(){
     try {
       if (tipo === 'cliente') {
       /*  const response = await axios.get(`http://192.168.1.14:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${clienteCodigo}`);*/
-      const response = await fetch(`http://192.168.1.243:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${codigo}`);
+      const response = await fetch(`http://3.233.239.156:3000/api/clientes/seguro/busca/organizada/codigo?codigo=${codigo}`);
         if (response.data.data) {
           selecionarCliente(response.data.data);
         }
       } else {
-        const response = await axios.get(`http://192.168.1.243:3000/api/produto/${codigo}`);
+        const response = await axios.get(`http://3.233.239.156:3000/api/produto/${codigo}`);
         if (response.data.data) {
           selecionarProduto(response.data.data);
         }
@@ -298,7 +304,7 @@ function buscarProdutoCodigo(){
  function handleGerarVenda(){
   
 alert('Venda gerada com sucesso!')
-axios.post('http://192.168.1.243:3000/api/pedidos/novo/pedido', {
+axios.post('http://3.233.239.156:3000/api/pedidos/novo/pedido', {
   VALOR: calcularTotal(),
   CODIGO: clienteSelecionado.CODIGO,
   NOME: clienteSelecionado.NOME,
@@ -498,6 +504,7 @@ const handleAlterarQuantidade = (id, novaQtd) => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Nova Venda</Text>
+         
           {itens.length > 0 && (
             <View style={styles.totalContainer}>
               <Text style={styles.totalText}>Total: R$ {calcularTotal()}</Text>

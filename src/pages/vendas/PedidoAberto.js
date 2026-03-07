@@ -22,7 +22,7 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 
 // URL base da API
-const API_URL = "http://192.168.1.243:3000/api";
+const API_URL = "http://3.233.239.156:3000/api";
 
 export default function PedidoAberto() {
   const [pedidos, setPedidos] = useState([]);
@@ -82,8 +82,24 @@ export default function PedidoAberto() {
     }
   };
 
-  function handleDarBaixa(id) {
-    return(alert("Dar baixa no pedido " + id))
+  function handleDarBaixa(pedido) {
+   // alert(pedido)
+    axios.post(`${API_URL}/pedidos/novo/pagamento`, {
+      pedido: pedido,
+      VALOR: pedido.VALOR,
+      DATA_PAGO: new Date().toISOString(),
+      PAGO: 'S'
+    })
+    .then(response => {
+      alert('Pagamento realizado com sucesso');
+      console.log('Pagamento realizado com sucesso:', response.data);
+      fetchPedidos();
+    })
+    .catch(error => {
+      console.error('Erro ao realizar pagamento:', error);
+      alert('Erro ao realizar pagamento. Verifique sua conexão.');
+    });
+   // window.location.reload();
   
   }
 

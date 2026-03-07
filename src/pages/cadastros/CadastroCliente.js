@@ -16,7 +16,7 @@ import axios from 'axios';
 import { set } from 'lodash';
 
 export default function CadastroCliente() {
-  const API_BASE_URL = 'http://192.168.56.1.3000/api';
+  const API_BASE_URL = 'http://3.233.239.156:3000/api';
   
   // Estados dos campos
   const [nome, setNome] = useState('');

@@ -253,8 +253,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: 80,
-    paddingTop: 40,
+   // marginTop: 20,
+    marginBottom: 20,
+    paddingTop: 10,
   },
   header: {
     alignItems: 'center',
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   logoText: {
     fontSize: 24,

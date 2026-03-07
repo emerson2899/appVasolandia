@@ -28,13 +28,13 @@ function Menu() {
             screen: 'Cadastro de Clientes',
             bgColor: "#E8F5E9"
         },
-        {
+      /*  {
             id: 2,
             title: "Orçamentos",
             icon: <Entypo name="open-book" size={32} color="#2D5A3D" />,
             screen: 'Menu Orcamentos',
             bgColor: "#F1F8E9"
-        },
+        },*/
         {
             id: 3,
             title: "Nova Venda",
