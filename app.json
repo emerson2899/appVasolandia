@@ -24,7 +24,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.emersonfel2899.vasolandiaapp"
+      "package": "com.emersonfel2899.vasolandiaapp",
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -36,7 +42,21 @@
     },
     "plugins": [
       "expo-asset",
-      "expo-font"
+      "expo-font",
+    
+    
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableJetifier": true,
+          "androidx": true,
+            "extraMavenRepos": [
+              "https://jcenter.bintray.com/"],
+            "agpVersion": "8.2.1"
+          }
+        }
+      ]
     ]
   }
 }

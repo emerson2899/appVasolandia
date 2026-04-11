@@ -47,7 +47,7 @@ index 0000000..d40434f
 Binary files /dev/null and b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/android-195148618/project-info.ser differ
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser
 new file mode 100644
-index 0000000..915cb1d
+index 0000000..d4cf3ff
 Binary files /dev/null and b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser differ
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/trust/F657567726F811FB98AF8984A31F397B6E9233F80355D58B6D5A965C7348B11D b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/trust/F657567726F811FB98AF8984A31F397B6E9233F80355D58B6D5A965C7348B11D
 new file mode 100644
@@ -60,10 +60,10 @@ diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/
 new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle b/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
-index d86e4f5..1613c95 100644
+index d86e4f5..b7034bf 100644
 --- a/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
 +++ b/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
-@@ -1,60 +1,62 @@
+@@ -1,60 +1,32 @@
 -buildscript {
 -    repositories {
 -        jcenter { url "http://jcenter.bintray.com/" }
@@ -88,10 +88,8 @@ index d86e4f5..1613c95 100644
  android {
 -    compileSdkVersion 27
 -    buildToolsVersion "27.0.3"
-+    // Namespace obrigatório para o Gradle 8+
 +    namespace "cn.jystudio.bluetooth"
 +    
-+    // Herda as versões do projeto principal (Expo) garantindo compatibilidade
 +    compileSdkVersion rootProject.ext.has('compileSdkVersion') ? rootProject.ext.get('compileSdkVersion') : 35
 +    buildToolsVersion rootProject.ext.has('buildToolsVersion') ? rootProject.ext.get('buildToolsVersion') : "35.0.0"
  
@@ -103,39 +101,30 @@ index d86e4f5..1613c95 100644
 +        minSdkVersion rootProject.ext.has('minSdkVersion') ? rootProject.ext.get('minSdkVersion') : 24
 +        targetSdkVersion rootProject.ext.has('targetSdkVersion') ? rootProject.ext.get('targetSdkVersion') : 35
      }
-+
-+    // Importante para o Gradle 8 tratar avisos de bibliotecas antigas
-     lintOptions {
-         abortOnError false
-+        checkReleaseBuilds false
-     }
-+
-     sourceSets {
-         main {
-+            java.srcDirs = ['src/main/java']
-             aidl.srcDirs = ['src/main/java']
-         }
-     }
-+
-+    compileOptions {
-+        sourceCompatibility JavaVersion.VERSION_17
-+        targetCompatibility JavaVersion.VERSION_17
-+    }
- }
+-    lintOptions {
+-        abortOnError false
+-    }
+-    sourceSets {
+-        main {
+-            aidl.srcDirs = ['src/main/java']
+-        }
+-    }
+-}
  
- repositories {
+-repositories {
 -    jcenter { url "http://jcenter.bintray.com/" }
 -    maven {url "http://repo.spring.io/plugins-release/"}
-+    google()
-     mavenCentral()
+-    mavenCentral()
 -    maven {
 -        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
 -        url "$rootDir/../node_modules/react-native/android"
 -    }
 -    maven {
 -        url 'https://maven.google.com'
--    }
-+    maven { url "https://jitpack.io" }
++    compileOptions {
++        sourceCompatibility JavaVersion.VERSION_17
++        targetCompatibility JavaVersion.VERSION_17
+     }
  }
  
  dependencies {
@@ -144,25 +133,16 @@ index d86e4f5..1613c95 100644
 -    implementation group: 'com.android.support', name: 'support-v4', version: '27.0.0'
 -    implementation "com.google.zxing:core:3.3.0"
 +    implementation fileTree(dir: 'libs', include: ['*.jar'])
-+    
-+    // Fornecido pelo projeto principal (React Native)
 +    compileOnly 'com.facebook.react:react-native:+' 
-+    
-+    // Dependências nativas atualizadas para AndroidX
++    implementation "com.google.zxing:core:3.3.3"
 +    implementation "androidx.core:core:1.13.1"
 +    implementation "androidx.appcompat:appcompat:1.6.1"
-+    implementation "com.google.zxing:core:3.3.3" // Versão levemente mais estável
 +}
 +
-+// Isso resolve o erro de "No matching variant" ao limpar conflitos globais
++// Isso força o Gradle a ignorar versões conflitantes de outras bibliotecas
 +configurations.all {
-+    resolutionStrategy {
-+        force "androidx.core:core:1.13.1"
-+    }
 +    exclude group: 'com.android.support', module: 'support-v4'
 +    exclude group: 'com.android.support', module: 'support-compat'
-+    exclude group: 'com.android.support', module: 'support-media-compat'
-+    exclude group: 'com.android.support', module: 'support-core-utils'
  }
 \ No newline at end of file
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/build/reports/problems/problems-report.html b/node_modules/react-native-bluetooth-escpos-printer/android/build/reports/problems/problems-report.html
