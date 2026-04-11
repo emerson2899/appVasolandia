@@ -47,7 +47,7 @@ index 0000000..d40434f
 Binary files /dev/null and b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/android-195148618/project-info.ser differ
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser
 new file mode 100644
-index 0000000..432c725
+index 0000000..8b1d709
 Binary files /dev/null and b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/subprojects.ser differ
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/trust/F657567726F811FB98AF8984A31F397B6E9233F80355D58B6D5A965C7348B11D b/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/nb-cache/trust/F657567726F811FB98AF8984A31F397B6E9233F80355D58B6D5A965C7348B11D
 new file mode 100644
@@ -60,10 +60,10 @@ diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/.gradle/
 new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle b/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
-index d86e4f5..8da6dcc 100644
+index d86e4f5..b969abb 100644
 --- a/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
 +++ b/node_modules/react-native-bluetooth-escpos-printer/android/build.gradle
-@@ -1,60 +1,60 @@
+@@ -1,60 +1,54 @@
 -buildscript {
 -    repositories {
 -        jcenter { url "http://jcenter.bintray.com/" }
@@ -88,20 +88,20 @@ index d86e4f5..8da6dcc 100644
  android {
 -    compileSdkVersion 27
 -    buildToolsVersion "27.0.3"
-+    // Define o namespace exigido pelo Gradle 8+
++    // Namespace obrigatório para o Gradle 8
 +    namespace "cn.jystudio.bluetooth"
 +    
-+    // Usa as versões definidas pelo projeto raiz (padrão Expo)
++    // Herda as versões do projeto principal (Expo)
 +    compileSdkVersion rootProject.ext.has('compileSdkVersion') ? rootProject.ext.get('compileSdkVersion') : 35
 +    buildToolsVersion rootProject.ext.has('buildToolsVersion') ? rootProject.ext.get('buildToolsVersion') : "35.0.0"
  
      defaultConfig {
 -        minSdkVersion 16
 -        targetSdkVersion 24
+-        versionCode 1
+-        versionName "1.0"
 +        minSdkVersion rootProject.ext.has('minSdkVersion') ? rootProject.ext.get('minSdkVersion') : 24
 +        targetSdkVersion rootProject.ext.has('targetSdkVersion') ? rootProject.ext.get('targetSdkVersion') : 35
-         versionCode 1
-         versionName "1.0"
      }
 +
      lintOptions {
@@ -142,22 +142,18 @@ index d86e4f5..8da6dcc 100644
 -    implementation group: 'com.android.support', name: 'support-v4', version: '27.0.0'
 +    implementation fileTree(dir: 'libs', include: ['*.jar'])
 +    
-+    // Importante: usar compileOnly para o React Native
++    // Use compileOnly para evitar que o RN seja duplicado no bundle
 +    compileOnly 'com.facebook.react:react-native:+' 
 +    
      implementation "com.google.zxing:core:3.3.0"
-+
-+    // Força o uso do AndroidX
 +    implementation "androidx.core:core:1.13.1"
 +    implementation "androidx.appcompat:appcompat:1.6.1"
 +}
 +
-+// Mata os conflitos de duplicação de classes antigas
++// Remove vestígios do Android Support que causam conflitos de 'Duplicate Class'
 +configurations.all {
 +    exclude group: 'com.android.support', module: 'support-v4'
 +    exclude group: 'com.android.support', module: 'support-compat'
-+    exclude group: 'com.android.support', module: 'support-media-compat'
-+    exclude group: 'com.android.support', module: 'support-core-utils'
  }
 \ No newline at end of file
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/build/reports/problems/problems-report.html b/node_modules/react-native-bluetooth-escpos-printer/android/build/reports/problems/problems-report.html
