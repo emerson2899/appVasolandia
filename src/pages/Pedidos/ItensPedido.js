@@ -36,7 +36,7 @@ function ItensPedido() {
     try {
       setError(null);
       const response = await axios.get(
-        `http://3.233.239.156:3000/api/pedidos/listar/relacao/pedido?pedido=${codigoPedido}`
+        `http://54.232.216.121:3000/api/pedidos/listar/relacao/pedido?pedido=${codigoPedido}`
       );
       
       console.log("Dados recebidos:", response.data.data);

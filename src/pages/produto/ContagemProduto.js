@@ -9,7 +9,7 @@ const ContagemProduto = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await axios.get('http://3.233.239.156:3000/api/produto/seguro/contar');
+      const response = await axios.get('http://54.232.216.121:3000/api/produto/seguro/contar');
       setContagem(response.data.data.total[0]);
     };
     fetchData();
