@@ -46,7 +46,7 @@ export default function App() {
       <Stack.Screen name="Menu" component={Menu} />
       <Stack.Screen name="Cadastro de Clientes" component={CadastroCliente} />
       <Stack.Screen name="Orcamentos" component={NovoOrcamento} />
-      <Stack.Screen name="Gerar Venda" component={GerarVenda} />
+      <Stack.Screen name="Gerar Venda" component={NovaVenda} />
       <Stack.Screen name="Novo Pedido de Venda" component={NovaVenda} />
       <Stack.Screen name="Contagem de Produto" component={ContagemProduto} />
       <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
