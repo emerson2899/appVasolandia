@@ -14,11 +14,24 @@ import LocalizarProduto from './src/pages/produto/LocalizarProduto';
 import ItensPedido from './src/pages/Pedidos/ItensPedido';
 import ContorleOPrcamento from './src/pages/orcamentos/ControleOrcamento';
 import MenuOrcamento from './src/pages/orcamentos/MenuOrcamento';
+import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
 //import NovoOrcamento from './src/pages/orcamentos/NovoOrcamento';
 
 import { head } from 'lodash';
 import GerarVenda from './src/pages/vendas/GerarVenda';
 export default function App() {
+   const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome5.font,
+    ...Feather.font,
+  });
+
+  if (!fontsLoaded) {
+    return null; // Ou um Loading
+  }
+
+  
   const Stack = createNativeStackNavigator();
   return (
   <NavigationContainer>
@@ -57,3 +70,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+
+ 
