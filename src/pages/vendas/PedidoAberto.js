@@ -22,7 +22,7 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 
 // URL base da API
-const API_URL = "http://192.168.1.243:3000/api";
+const API_URL = "http://191.252.185.78:3000/api";
 
 export default function PedidoAberto() {
   const [pedidos, setPedidos] = useState([]);

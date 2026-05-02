@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Vasolandia",
-    "slug": "vasolandia ERP",
+    "slug": "vasolandiaERP",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,16 +13,26 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.emersonfel2899.vasolandiaERP",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.emersonfel2899.vasolandiaERP"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e84cb7d9-296a-4c00-a0fa-c58f991170bb"
+      }
     }
   }
 }
