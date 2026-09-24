@@ -14,11 +14,13 @@ import LocalizarProduto from './src/pages/produto/LocalizarProduto';
 import ItensPedido from './src/pages/Pedidos/ItensPedido';
 import ContorleOPrcamento from './src/pages/orcamentos/ControleOrcamento';
 import MenuOrcamento from './src/pages/orcamentos/MenuOrcamento';
+import NovoPedido from './src/pages/vendas/NovoPedido';
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
 //import NovoOrcamento from './src/pages/orcamentos/NovoOrcamento';
-
+import { useFonts } from 'expo-font';
 import { head } from 'lodash';
 import GerarVenda from './src/pages/vendas/GerarVenda';
+import { VendedorProvider } from './src/components/context/VendedorContext';
 export default function App() {
    const [fontsLoaded] = useFonts({
     ...Ionicons.font,
@@ -34,6 +36,7 @@ export default function App() {
   
   const Stack = createNativeStackNavigator();
   return (
+    <VendedorProvider>
   <NavigationContainer>
     <Stack.Navigator>
       <Stack.Screen name="Login" component={Login}  screenOptions={{
@@ -46,11 +49,12 @@ export default function App() {
       <Stack.Screen name="Menu" component={Menu} />
       <Stack.Screen name="Cadastro de Clientes" component={CadastroCliente} />
       <Stack.Screen name="Orcamentos" component={NovoOrcamento} />
-      <Stack.Screen name="Gerar Venda" component={NovaVenda} />
+      <Stack.Screen name="Gerar Venda" component={GerarVenda} />
       <Stack.Screen name="Novo Pedido de Venda" component={NovaVenda} />
       <Stack.Screen name="Contagem de Produto" component={ContagemProduto} />
       <Stack.Screen name="Buscar Cliente" component={BuscaCliente} />
       <Stack.Screen name="Pedidos Abertos" component={PedidoAberto} />
+      <Stack.Screen name="Novo Pedido" component={NovoPedido} />
     <Stack.Screen name="Localizar Produto" component={LocalizarProduto} />
     <Stack.Screen name="Itens do Pedido" component={ItensPedido} />
     <Stack.Screen name="Controle Orcamentos" component={ContorleOPrcamento} />
@@ -58,6 +62,7 @@ export default function App() {
     <Stack.Screen name="Novo Orcamento" component={NovoOrcamento} />
     </Stack.Navigator>
     </NavigationContainer>
+    </VendedorProvider>
     
   );
 }

@@ -9,7 +9,8 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useVendedor } from '../contexts/VendedorContext';
+//import { useVendedor } from '../contexts/VendedorContext';
+import {useVendedor} from '../../components/context/VendedorContext';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 function GerarVenda({ navigation }) {
@@ -31,7 +32,7 @@ function GerarVenda({ navigation }) {
     const [vendedorCodigo, setVendedorCodigo] = useState('');
 
     // API URL
-    const API_URL = 'http://191.252.185.78:3000/api';
+    const API_URL = 'http://192.168.1.243:3000/api';
 
     // Carregar dados do vendedor
     useEffect(() => {
@@ -105,6 +106,7 @@ function GerarVenda({ navigation }) {
         novosItens.splice(index, 1);
         setItens(novosItens);
     };
+    
 
     const LocalizarClientePorNome = async () => {
         if (!clienteNome) {

@@ -39,7 +39,7 @@ function Menu() {
             id: 3,
             title: "Nova Venda",
             icon: <MaterialCommunityIcons name="point-of-sale" size={32} color="#2D5A3D" />,
-            screen: 'Novo Pedido de Venda',
+            screen: 'Novo Pedido',
             bgColor: "#E8F5E9"
         },
         {
