@@ -7,7 +7,9 @@ import {
 import { CameraView, Camera, useCameraPermissions } from 'expo-camera';
 import { FontAwesome5, MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
 import axios from 'axios';
+import * as Print from 'expo-print';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useVendedor } from '../../components/context/VendedorContext';
 
 const API_BASE_URL = 'http://192.168.1.243:3000/api';
 
@@ -41,7 +43,46 @@ export default function NovoPedido() {
   const [scanned, setScanned] = useState(false);
   const [flash, setFlash] = useState("off");
 
+   // Dados do vendedor
+      const { vendedor, loading: loadingVendedor } = useVendedor();
+      const [vendedorNome, setVendedorNome] = useState('');
+      const [vendedorCodigo, setVendedorCodigo] = useState('');
+
   const quantidadeRef = useRef();
+
+   // Carregar dados do vendedor
+      useEffect(() => {
+          carregarDadosVendedor();
+      }, [vendedor]);
+
+      const carregarDadosVendedor = () => { const carregarDadosVendedor = async () => {
+        try {
+            if (vendedor) {
+                setVendedorNome(vendedor.nome || '');
+                setVendedorCodigo(vendedor.codigo || '');
+                console.log('Vendedor carregado do contexto:', vendedor);
+            } else {
+                // Fallback: tentar carregar diretamente do AsyncStorage
+                const vendedorData = await AsyncStorage.getItem('vendedorLogado');
+                if (vendedorData) {
+                    const vendedorObj = JSON.parse(vendedorData);
+                    setVendedorNome(vendedorObj.nome || '');
+                    setVendedorCodigo(vendedorObj.codigo || '');
+                    console.log('Vendedor carregado do storage:', vendedorObj);
+                } else {
+                    console.warn('Nenhum vendedor encontrado!');
+                    // Redirecionar para o login se não tiver vendedor
+                    Alert.alert(
+                        'Sessão expirada',
+                        'Por favor, faça login novamente.',
+                        [{ text: 'OK', onPress: () => navigation.replace('Login') }]
+                    );
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar vendedor:', error);
+        }
+      }}
 
   // --- FUNÇÕES DE BUSCA DE CLIENTE ---
   const buscarClientesPorNome = async () => {
@@ -64,15 +105,12 @@ export default function NovoPedido() {
     setLoadingClientes(true);
     try {
       // Ajuste o endpoint conforme sua API real
-      const response = await axios.get(`${API_BASE_URL}/clientes/seguro/codigo?codigo=${clienteCodigo}`);
+      const response = await axios.get(`${API_BASE_URL}/clientes/seguro/busca/organizada/codigo?codigo=${clienteCodigo}`);
       const data = response.data.data || response.data;
+      console.log(data);
+       setSugestoesClientes(Array.isArray(data) ? data : []);
       
-      if (data && (data.NOME || data.nome)) {
-        selecionarCliente(data);
-        setClienteCodigo('');
-      } else {
-        Alert.alert("Aviso", "Cliente não encontrado.");
-      }
+    
     } catch (error) {
       Alert.alert("Erro", "Código de cliente inválido ou erro de conexão.");
     } finally {
