@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.emersonfel2899.vasolandiaERP"
+      "package": "com.vasolandia.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.emersonfel2899.vasolandiaERP'
+    namespace 'com.vasolandia.app'
     defaultConfig {
-        applicationId 'com.emersonfel2899.vasolandiaERP'
+        applicationId 'com.vasolandia.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -175,16 +175,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-project.ext.vectoricons = [
-    iconFontNames: [
-        'MaterialIcons.ttf',
-        'Ionicons.ttf',
-        'FontAwesome.ttf',
-        'FontAwesome5_Brands.ttf',
-        'FontAwesome5_Regular.ttf',
-        'FontAwesome5_Solid.ttf',
-        'Feather.ttf',
-        'MaterialCommunityIcons.ttf'
-    ]
-]
-apply from: "../../node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/fonts.gradle"

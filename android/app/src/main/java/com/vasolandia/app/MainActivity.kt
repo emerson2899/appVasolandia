@@ -1,4 +1,4 @@
-package com.emersonfel2899.vasolandiaERP
+package com.vasolandia.app
 
 import android.os.Build
 import android.os.Bundle
